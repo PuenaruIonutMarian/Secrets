@@ -4,9 +4,13 @@ const express = require("express"); // Import the Express framework
 const bodyParser = require("body-parser"); // Middleware for parsing request bodies
 const ejs = require("ejs"); // Templating engine for rendering dynamic content
 const mongoose = require("mongoose"); // MongoDB object modeling tool
+// const encrypt = require("mongoose-encryption"); // Encryption plugin for Mongoose
+// const md5 = require("md5"); // Hashing algorithm for password hashing
+// const bcrypt = require("bcrypt");
+// const saltRounds = 10;
 const session = require('express-session');
 const passport = require('passport');
-const passportLocalMongoose = require("passport-local-mongoose");
+// const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const findOrCreate = require('mongoose-findorcreate')
 
@@ -34,28 +38,20 @@ mongoose.connect("mongodb://127.0.0.1:27017/userDB", {
 
 const userSchema = new mongoose.Schema({
     email: String,
-    password: String,
-    googleId: String
+    password: String
 });
 
-userSchema.plugin(passportLocalMongoose);
+// This will encrypt only the password field with the use of a secret, which is basically a long string. For the version with mongoose-encryption.
+// userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ['password'] });
+
+//this is what we use to hash and salt passwords and save the users in mongodb
+// userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
 
 const User = new mongoose.model("User", userSchema); // Create a User model based on the userSchema
-
 passport.use(User.createStrategy());
-
-passport.serializeUser(function(user, done){done(null, user.id);});
-passport.deserializeUser(function(id, done) {
-    User.findById(id)
-        .then(user => {
-            done(null, user);
-        })
-        .catch(err => {
-            done(err, null);
-        });
-});
-
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 // Add the GoogleStrategy to passport
 passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID,
@@ -65,30 +61,24 @@ passport.use(new GoogleStrategy({
     },
     function (accessToken, refreshToken, profile, cb) {
         // Use the Google ID as the identifier for the user
-        console.log(profile);
+        const googleId = profile.id;
 
         // Find or create the user with the given Google ID
-        User.findOrCreate({ username: profile.emails[0].value, googleId: profile.id }, function (err, user) {
+        User.findOrCreate({ googleId: googleId }, function (err, user) {
             return cb(err, user);
         });
     }
 ));
 
-
-
-// Home route handler
-app.get("/", function (req, res) {
-    res.render("home"); // Render the "home" template
-});
 // Redirect to Google for authentication
-app.get("/auth/google",
+app.get('/auth/google',
     passport.authenticate('google', {
-        scope: ['profile','email']
+        scope: ['profile']
     })
 );
 
 // Google callback URL after successful authentication
-app.get("/auth/google/callback",
+app.get('/auth/google/callback',
     passport.authenticate('google', {
         failureRedirect: '/login'
     }),
@@ -98,16 +88,15 @@ app.get("/auth/google/callback",
     }
 );
 
+// Home route handler
+app.get("/", function (req, res) {
+    res.render("home"); // Render the "home" template
+});
+
 // Login page route handler
 app.get("/login", function (req, res) {
     res.render("login"); // Render the "login" template
 });
-
-// Register page route handler
-app.get("/register", function (req, res) {
-    res.render("register"); // Render the "register" template
-});
-
 
 app.get("/secrets", function (req, res) {
     if (req.isAuthenticated() || req.user) {
@@ -127,6 +116,10 @@ app.get("/logout", function (req, res) {
     });
 });
 
+// Register page route handler
+app.get("/register", function (req, res) {
+    res.render("register"); // Render the "register" template
+});
 
 
 
@@ -160,6 +153,60 @@ app.post("/login", function (req, res) {
         }
     })
 });
+
+
+// Login form submission route handler for the hashing version
+// app.post("/login", async function (req, res) {
+//   try {
+//     const username = req.body.username;
+//     const password = req.body.password;
+//     const foundUser = await User.findOne({ email: username }).exec(); // Find a user with the provided username
+//     if (foundUser) {
+//       bcrypt.compare(password, foundUser.password, function (err, result) {
+//         if (result === true) {
+//           res.render("secrets"); // Render the "secrets" template if the passwords match
+//         } else {
+//           res.send("Invalid password"); // Send an error message if the passwords don't match
+//         }
+//       });
+//     } else {
+//       res.send("User not found"); // Send an error message if the user is not found
+//     }
+//   } catch (err) {
+//     console.log(err);
+//     res.send("An error occurred during login."); // Send an error message if an error occurs
+//   }
+// });
+
+
+// Register form submission route handler for the hashing version
+// app.post("/register", async function (req, res) {
+//   const { username, password } = req.body;
+
+//   try {
+//     const existingUser = await User.findOne({ email: username }).exec(); // Check if the user already exists
+//     if (existingUser) {
+//       res.send("User already exists."); // Send an error message if the user already exists
+//     } else {
+//       bcrypt.hash(password, saltRounds, async function (err, hash) {
+//         if (err) {
+//           console.log(err);
+//           res.send("An error occurred during registration.");
+//         } else {
+//           const newUser = new User({
+//             email: username,
+//             password: hash, // Store the hashed password in the database
+//           });
+//           await newUser.save(); // Save the new user to the database
+//           res.render("secrets"); // Render the "secrets" template after successful registration
+//         }
+//       });
+//     }
+//   } catch (err) {
+//     console.log(err);
+//     res.send("An error occurred during registration."); // Send an error message if an error occurs
+//   }
+// });
 
 
 app.listen(3000, function () {

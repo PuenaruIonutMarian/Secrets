@@ -1,6 +1,6 @@
 
 body {
-  background-color: #E8ECEF;
+  background-color: #678983;
 }
 
 .centered {
@@ -11,6 +11,13 @@ body {
 .secret-text {
   text-align: center;
   font-size: 2rem;
-  color: #fff;
-  background-color: #000;
+  color: #F0E9D2;
+  background-color: #181D31;
+  border-radius: 10px;
 }
+
+.jumbotron{background-color: #678983;}
+.submit{background-color: #181D31; color:#F0E9D2}
+.logout{color:#181D31; background-color: #F0E9D2; border-color: none;}
+.login{background-color: #181D31; color: #F0E9D2;}
+.register{background-color: #F0E9D2; color: #181D31;}
