@@ -1,6 +1,6 @@
 
 body {
-  background-color: #678983;
+  background-color: #B5C99A;
 }
 
 .centered {
@@ -11,13 +11,14 @@ body {
 .secret-text {
   text-align: center;
   font-size: 2rem;
-  color: #F0E9D2;
-  background-color: #181D31;
+  color: #862B0D;
+  background-color: #FFC95F;
   border-radius: 10px;
 }
 
-.jumbotron{background-color: #678983;}
-.submit{background-color: #181D31; color:#F0E9D2}
-.logout{color:#181D31; background-color: #F0E9D2; border-color: none;}
-.login{background-color: #181D31; color: #F0E9D2;}
-.register{background-color: #F0E9D2; color: #181D31;}
+.jumbotron{background-color: #B5C99A;}
+.submit{background-color: #862B0D; color:#FFF9C9}
+.logout{color:#862B0D; background-color: #FFF9C9; border-color: none;}
+.login{background-color: #862B0D; color: #FFF9C9;}
+.register{background-color: #FFF9C9; color: #862B0D;}
+.socialPlace{background-color: #FFC95F;}
